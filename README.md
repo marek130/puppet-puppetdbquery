@@ -1,31 +1,30 @@
+# Project archived
+
+This project has largely been replaced by the PQL in newer PuppetDB versions, see https://www.puppet.com/blog/puppet-query-language-pql
+
 [![Build Status](https://travis-ci.org/dalen/puppet-puppetdbquery.png)](https://travis-ci.org/dalen/puppet-puppetdbquery)
 
-PuppetDB query tools
-====================
+# PuppetDB query tools
 
 This module implements command line tools and Puppet functions that can be used to query puppetdb.
 There's also a hiera backend that can be used to return query results from puppetdb.
 
-Usage warning
--------------
+## Usage warning
 
 You might not need this puppet module anymore. PuppetDB bundles a simplified query language since version 4.0. So unless you really prefer the syntax in this module you can just use PQL instead. See https://puppet.com/blog/introducing-puppet-query-language-pql for more details.
 
-Requirements
-============
+# Requirements
 
 PuppetDB terminus is required for the Puppet functions, but not for the face.
 
 To parse date queries the Ruby gem "chronic" is required.
 
-Required PuppetDB version
--------------------------
+## Required PuppetDB version
 
 This module uses the V4 API, and as such it requires at least PuppetDB 3.0.0.
 If you are using PuppetDB 2.x please use the 1.x version of this module instead.
 
-Query syntax
-============
+# Query syntax
 
 Use `fact=value` to search for nodes where `fact` equals `value`. To search for
 structured facts use dots between each part of the fact path, for example
@@ -37,7 +36,7 @@ to do a regexp match on the title. Type names and class names are case insensiti
 A resource can be preceded by @@ to match exported resources, the default is to only
 match "local" resources.
 
-Strings can contain letters, numbers or the characters :-_ without needing to be quoted.
+Strings can contain letters, numbers or the characters :-\_ without needing to be quoted.
 If they contain any other characters they need to be quoted with single or double quotes.
 Use backslash (\) to escape quotes within a quoted string or double backslash for backslashes.
 
@@ -59,21 +58,21 @@ A bare string without comparison operator will be treated as a regexp match agai
 
 #### Comparison operators
 
-| Op | Meaning                |
-|----|------------------------|
-| =  | Equality               |
-| != | Not equal              |
-| ~  | Regexp match           |
-| !~ | Not equal Regexp match |
-| <  | Less than              |
-| =< | Less than or equal     |
-| >  | Greater than           |
-| => | Greater than or equal  |
+| Op  | Meaning                |
+| --- | ---------------------- |
+| =   | Equality               |
+| !=  | Not equal              |
+| ~   | Regexp match           |
+| !~  | Not equal Regexp match |
+| <   | Less than              |
+| =<  | Less than or equal     |
+| >   | Greater than           |
+| =>  | Greater than or equal  |
 
 #### Logical operators
 
 | Op  |            |
-|-----|------------|
+| --- | ---------- |
 | not | (unary op) |
 | and |            |
 | or  |            |
@@ -98,8 +97,7 @@ Nodes that haven't reported in the last 2 hours
 
     #node.report_timestamp<@"2 hours ago"
 
-Usage
-======
+# Usage
 
 To get a list of the supported subcommands for the puppetdbquery face, run:
 
@@ -110,8 +108,7 @@ You can run `puppet help` on the returned subcommands
     $ puppet help puppetdbquery nodes
     $ puppet help puppetdbquery facts
 
-CLI
----
+## CLI
 
 Each of the faces uses the following query syntax to return all objects found on a subset of nodes:
 
@@ -136,17 +133,15 @@ events - a list of events on the matched nodes
      $ puppet puppetdbquery events '(Package["mysql-server"] and architecture=amd64)' --since='1 hour ago' --until=now --status=success
        host.example.com: 2013-06-10T10:58:37.000Z: File[/foo/bar]/content ({md5}5711edf5f5c50bd7845465471d8d39f0 -> {md5}e485e731570b8370f19a2a40489cc24b): content changed '{md5}5711edf5f5c50bd7845465471d8d39f0' to '{md5}e485e731570b8370f19a2a40489cc24b'
 
-Ruby
-----
+## Ruby
 
-  faces can be called from the ruby in exactly they same way they are called from the command line:
+faces can be called from the ruby in exactly they same way they are called from the command line:
 
     $ irb> require 'puppet/face'
       irb> Puppet.initialize_settings
       irb> Puppet::Face[:puppetdbquery, :current].nodes('(Package["mysql-server"] and architecture=amd64)')
 
-Puppet functions
-----------------
+## Puppet functions
 
 There's corresponding functions to query PuppetDB directly from Puppet manifests.
 All the functions accept either the simplified query language or raw PuppetDB API queries.
@@ -169,9 +164,8 @@ Returns an array of certnames or fact values if a fact is specified.
 Accepts two arguments or three argument, a query used to discover nodes, and a resource query
 , and an optional a boolean to whether or not to group the result per host.
 
-
 Return either a hash (by default) that maps the name of the nodes to a list of
-resource entries.  This is a list because there's no single
+resource entries. This is a list because there's no single
 reliable key for resource operations that's of any use to the end user.
 
 #### Examples
@@ -218,8 +212,7 @@ To query for a nested value, simply join the keys you want to extract together o
 
     $host_kernels_and_ips = query_facts('manufacturer~"Dell.*" and Class[Apache]', ['kernel', 'networking.interfaces.eth1.ip'])
 
-Hiera backend
--------------
+## Hiera backend
 
 The hiera backend can be used to return an array with results from a puppetdb query. It requires another hiera backend to be active at the same time, and that will be used to define the actual puppetdb query to be used. It does not matter which backend that is, there can even be several of them. To enable add the backend `puppetdb`to the backends list in `hiera.yaml`.
 
@@ -281,8 +274,7 @@ Sometimes puppetdb doesn't return items in the same order every run - hiera 5 on
 
 When returning facts only nodes that actually have the fact are returned, even if more nodes would in fact match the query itself.
 
-Related projects
-================
+# Related projects
 
-* JavaScript version: https://github.com/dalen/node-puppetdbquery
-* Python version: https://github.com/bootc/pypuppetdbquery
+- JavaScript version: https://github.com/dalen/node-puppetdbquery
+- Python version: https://github.com/bootc/pypuppetdbquery

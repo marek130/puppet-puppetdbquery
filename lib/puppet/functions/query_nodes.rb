@@ -32,12 +32,7 @@ Puppet::Functions.create_function('query_nodes') do
   end
 
   def puppetdb
-    @uri ||= URI(Puppet::Util::Puppetdb.config.server_urls.first)
-    @puppetdb ||= PuppetDB::Connection.new(
-      @uri.host,
-      @uri.port,
-      @uri.scheme == 'https'
-    )
+    @puppetdb ||= PuppetDB::Connection.from_uris(Puppet::Util::Puppetdb.config.server_urls)
   end
 
   def query_nodes(query)

@@ -9,19 +9,12 @@ class Hiera
           Puppet.initialize_settings unless Puppet[:confdir]
           require 'puppet/util/puppetdb'
           PuppetDB::Connection.check_version
-          uri = URI(Puppet::Util::Puppetdb.config.server_urls.first)
-          host = uri.host
-          port = uri.port
-          ssl = uri.scheme == 'https'
+          @puppetdb = PuppetDB::Connection.from_uris(Puppet::Util::Puppetdb.config.server_urls)
         rescue
-          host = 'puppetdb'
-          port = 443
-          ssl = true
+          @puppetdb = PuppetDB::Connection.new('puppetdb', 443, true)
         end
 
         Hiera.debug('Hiera PuppetDB backend starting')
-
-        @puppetdb = PuppetDB::Connection.new(host, port, ssl)
         @parser = PuppetDB::Parser.new
       end
 

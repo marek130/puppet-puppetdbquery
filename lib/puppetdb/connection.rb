@@ -10,9 +10,16 @@ class PuppetDB::Connection
   include Puppet::Util::Logging
 
   def initialize(host = 'puppetdb', port = 443, use_ssl = true)
-    @host = host
-    @port = port
-    @use_ssl = use_ssl
+    @servers = [{ :host => host, :port => port, :use_ssl => use_ssl }]
+  end
+
+  def self.from_uris(uris)
+    conn = allocate
+    conn.instance_variable_set(:@servers, Array(uris).map do |uri|
+      u = URI(uri.to_s)
+      { :host => u.host, :port => u.port, :use_ssl => u.scheme == 'https' }
+    end)
+    conn
   end
 
   def self.check_version
@@ -49,23 +56,40 @@ EOT
     end
     http = options[:http]
 
-    unless http
-      require 'puppet/network/http_pool'
-      http = Puppet::Network::HttpPool.http_instance(@host, @port, @use_ssl)
-    end
-    headers = { 'Accept' => 'application/json' }
-
     if options[:extract]
       query = PuppetDB::ParserHelper.extract(*Array(options[:extract]), query)
     end
 
-    uri = "/pdb/query/#{version}/#{endpoint}"
-    uri += URI.escape "?query=#{query.to_json}" unless query.nil? || query.empty?
+    req_uri = "/pdb/query/#{version}/#{endpoint}"
+    req_uri += URI.escape "?query=#{query.to_json}" unless query.nil? || query.empty?
 
     debug("PuppetDB query: #{query.to_json}")
 
-    resp = http.get(uri, headers)
-    fail "PuppetDB query error: [#{resp.code}] #{resp.msg}, query: #{query.to_json}" unless resp.is_a?(Net::HTTPSuccess)
-    JSON.parse(resp.body)
+    headers = { 'Accept' => 'application/json' }
+
+    if http
+      resp = http.get(req_uri, headers)
+      fail "PuppetDB query error: [#{resp.code}] #{resp.msg}, query: #{query.to_json}" unless resp.is_a?(Net::HTTPSuccess)
+      return JSON.parse(resp.body)
+    end
+
+    require 'puppet/network/http_pool'
+    last_error = nil
+    @servers.each do |server|
+      begin
+        http = Puppet::Network::HttpPool.http_instance(server[:host], server[:port], server[:use_ssl])
+        resp = http.get(req_uri, headers)
+        fail "PuppetDB query error: [#{resp.code}] #{resp.msg}, query: #{query.to_json}" unless resp.is_a?(Net::HTTPSuccess)
+        return JSON.parse(resp.body)
+      rescue RuntimeError
+        raise
+      rescue StandardError => e
+        last_error = e
+        Puppet.debug("PuppetDB server #{server[:host]}:#{server[:port]} unavailable: #{e.message}, trying next server")
+      end
+    end
+
+    raise last_error if last_error
+    fail 'PuppetDB query failed: no servers configured'
   end
 end

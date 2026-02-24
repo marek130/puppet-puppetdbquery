@@ -2,31 +2,40 @@
 
 require 'spec_helper'
 require 'puppetdb/connection'
+require 'puppet/util/puppetdb'
 
 describe 'query_nodes' do
+  let(:puppetdb) { double('PuppetDB::Connection') }
+
+  before do
+    allow(PuppetDB::Connection).to receive(:check_version)
+    allow(PuppetDB::Connection).to receive(:from_uris).and_return(puppetdb)
+    allow(Puppet::Util::Puppetdb).to receive_message_chain(:config, :server_urls).and_return([])
+  end
+
   context 'without fact parameter' do
     it do
-      PuppetDB::Connection.any_instance.expects(:query)
+      expect(puppetdb).to receive(:query)
         .with(:nodes, ['in', 'certname', ['extract', 'certname', ['select_fact_contents', ['and', ['=', 'path', ['hostname']], ['=', 'value', 'apache4']]]]], :extract => :certname)
-        .returns [ { 'certname' => 'apache4.puppetexplorer.io' } ]
+        .and_return([ { 'certname' => 'apache4.puppetexplorer.io' } ])
       should run.with_params('hostname="apache4"').and_return(['apache4.puppetexplorer.io'])
     end
   end
 
   context 'with a fact parameter' do
     it do
-      PuppetDB::Connection.any_instance.expects(:query)
+      expect(puppetdb).to receive(:query)
         .with(:facts, ['and', ['in', 'certname', ['extract', 'certname', ['select_fact_contents', ['and', ['=', 'path', ['hostname']], ['=', 'value', 'apache4']]]]], ['or', ['=', 'name', 'ipaddress']]], :extract => :value)
-        .returns [ { 'value' => '172.31.6.80' } ]
+        .and_return([ { 'value' => '172.31.6.80' } ])
       should run.with_params('hostname="apache4"', 'ipaddress').and_return(['172.31.6.80'])
     end
   end
 
   context 'with a nested fact parameter' do
     it do
-      PuppetDB::Connection.any_instance.expects(:query)
+      expect(puppetdb).to receive(:query)
         .with(:facts, ['and', ['in', 'certname', ['extract', 'certname', ['select_fact_contents', ['and', ['=', 'path', ['hostname']], ['=', 'value', 'apache4']]]]], ['or', ['=', 'name', 'networking']]], :extract => :value)
-        .returns [
+        .and_return([
           {
             'value' => {
               'interfaces' => {
@@ -42,16 +51,16 @@ describe 'query_nodes' do
               }
             }
           }
-        ]
+        ])
       should run.with_params('hostname="apache4"', 'networking.interfaces.eth1.ip').and_return(['172.32.6.80'])
     end
   end
 
   context 'with a missing nested fact parameter' do
     it do
-      PuppetDB::Connection.any_instance.expects(:query)
+      expect(puppetdb).to receive(:query)
         .with(:facts, ['and', ['in', 'certname', ['extract', 'certname', ['select_fact_contents', ['and', ['=', 'path', ['hostname']], ['=', 'value', 'apache4']]]]], ['or', ['=', 'name', 'networking']]], :extract => :value)
-        .returns [
+        .and_return([
           {
             'value' => {
               'interfaces' => {
@@ -67,7 +76,7 @@ describe 'query_nodes' do
               }
             }
           }
-        ]
+        ])
       should run.with_params('hostname="apache4"', 'networking.interfaces.missing_interface.ip').and_return([nil])
     end
   end

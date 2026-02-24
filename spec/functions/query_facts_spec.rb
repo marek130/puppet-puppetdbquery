@@ -2,32 +2,41 @@
 
 require 'spec_helper'
 require 'puppetdb/connection'
+require 'puppet/util/puppetdb'
 
 describe 'query_facts' do
+  let(:puppetdb) { double('PuppetDB::Connection') }
+
+  before do
+    allow(PuppetDB::Connection).to receive(:check_version)
+    allow(PuppetDB::Connection).to receive(:from_uris).and_return(puppetdb)
+    allow(Puppet::Util::Puppetdb).to receive_message_chain(:config, :server_urls).and_return([])
+  end
+
   it do
-    PuppetDB::Connection.any_instance.expects(:query)
+    expect(puppetdb).to receive(:query)
       .with(:facts, ['or', ['=', 'name', 'ipaddress']], {:extract => [:certname, :name, :value]})
-      .returns [
+      .and_return([
         { 'certname' => 'apache4.puppetexplorer.io', 'environment' => 'production', 'name' => 'ipaddress', 'value' => '172.31.6.80' }
-      ]
+      ])
     should run.with_params('', ['ipaddress']).and_return('apache4.puppetexplorer.io' => { 'ipaddress' => '172.31.6.80' })
   end
 
   it do
-    PuppetDB::Connection.any_instance.expects(:query)
+    expect(puppetdb).to receive(:query)
       .with(:facts, ['or', ['=', 'name', 'ipaddress'], ['=', 'name', 'network_eth0']], {:extract => [:certname, :name, :value]})
-      .returns [
+      .and_return([
         { 'certname' => 'apache4.puppetexplorer.io', 'environment' => 'production', 'name' => 'ipaddress', 'value' => '172.31.6.80' },
         { 'certname' => 'apache4.puppetexplorer.io', 'environment' => 'production', 'name' => 'network_eth0', 'value' => '172.31.0.0' }
-      ]
+      ])
     should run.with_params('', ['ipaddress', 'network_eth0']).and_return('apache4.puppetexplorer.io' => { 'ipaddress' => '172.31.6.80', 'network_eth0' => '172.31.0.0' })
   end
 
   context 'with a nested fact parameter' do
     it do
-      PuppetDB::Connection.any_instance.expects(:query)
+      expect(puppetdb).to receive(:query)
         .with(:facts, ['or', ['=', 'name', 'ipaddress'], ['=', 'name', 'networking']], {:extract => [:certname, :name, :value]})
-        .returns [
+        .and_return([
           { 'certname' => 'apache4.puppetexplorer.io', 'environment' => 'production', 'name' => 'ipaddress', 'value' => '172.31.6.80' },
           {
             'certname' => 'apache4.puppetexplorer.io',
@@ -47,7 +56,7 @@ describe 'query_facts' do
               }
             }
           }
-        ]
+        ])
       should run.with_params('', ['ipaddress', 'networking.interfaces.eth0.ip']).and_return('apache4.puppetexplorer.io' => { 'ipaddress' => '172.31.6.80', 'networking_interfaces_eth0_ip' => '172.31.6.80' })
     end
   end

@@ -81,9 +81,7 @@ EOT
         resp = http.get(req_uri, headers)
         fail "PuppetDB query error: [#{resp.code}] #{resp.msg}, query: #{query.to_json}" unless resp.is_a?(Net::HTTPSuccess)
         return JSON.parse(resp.body)
-      rescue RuntimeError
-        raise
-      rescue StandardError => e
+      rescue Exception => e
         last_error = e
         Puppet.debug("PuppetDB server #{server[:host]}:#{server[:port]} unavailable: #{e.message}, trying next server")
       end

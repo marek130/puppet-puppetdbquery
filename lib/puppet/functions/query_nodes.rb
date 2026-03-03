@@ -13,7 +13,7 @@ Puppet::Functions.create_function('query_nodes') do
   # This is needed if the puppetdb library isn't pluginsynced to the master
   $LOAD_PATH.unshift File.expand_path(File.join(File.dirname(__FILE__), '..', '..'))
   begin
-    require 'puppetdb/connection'
+    require 'puppetdb/connection_multi'
   ensure
     $LOAD_PATH.shift
   end
@@ -32,7 +32,7 @@ Puppet::Functions.create_function('query_nodes') do
   end
 
   def puppetdb
-    @puppetdb ||= PuppetDB::Connection.from_uris(Puppet::Util::Puppetdb.config.server_urls)
+    @puppetdb ||= PuppetDB::MultiConnection.from_uris(Puppet::Util::Puppetdb.config.server_urls)
   end
 
   def query_nodes(query)

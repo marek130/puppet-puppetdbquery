@@ -23,14 +23,14 @@ EOT
   # This is needed if the puppetdb library isn't pluginsynced to the master
   $LOAD_PATH.unshift File.expand_path(File.join(File.dirname(__FILE__), '..', '..', '..'))
   begin
-    require 'puppetdb/connection'
+    require 'puppetdb/connection_multi'
   ensure
     $LOAD_PATH.shift
   end
 
-  PuppetDB::Connection.check_version
+  PuppetDB::MultiConnection.check_version
 
-  puppetdb = PuppetDB::Connection.from_uris(Puppet::Util::Puppetdb.config.server_urls)
+  puppetdb = PuppetDB::MultiConnection.from_uris(Puppet::Util::Puppetdb.config.server_urls)
   parser = PuppetDB::Parser.new
   query = parser.facts_query query, facts_for_query if query.is_a? String
   parser.facts_hash(puppetdb.query(:facts, query, :extract => [:certname, :name, :value]), facts)

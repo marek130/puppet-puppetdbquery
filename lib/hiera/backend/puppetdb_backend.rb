@@ -2,16 +2,16 @@ class Hiera
   module Backend
     class Puppetdb_backend
       def initialize
-        require 'puppetdb/connection'
+        require 'puppetdb/connection_multi'
         begin
           require 'puppet'
           # This is needed when we run from hiera cli
           Puppet.initialize_settings unless Puppet[:confdir]
           require 'puppet/util/puppetdb'
-          PuppetDB::Connection.check_version
-          @puppetdb = PuppetDB::Connection.from_uris(Puppet::Util::Puppetdb.config.server_urls)
+          PuppetDB::MultiConnection.check_version
+          @puppetdb = PuppetDB::MultiConnection.from_uris(Puppet::Util::Puppetdb.config.server_urls)
         rescue
-          @puppetdb = PuppetDB::Connection.new('puppetdb', 443, true)
+          @puppetdb = PuppetDB::MultiConnection.new('puppetdb', 443, true)
         end
 
         Hiera.debug('Hiera PuppetDB backend starting')

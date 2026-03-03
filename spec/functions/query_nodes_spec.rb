@@ -1,15 +1,15 @@
 #! /usr/bin/env ruby -S rspec
 
 require 'spec_helper'
-require 'puppetdb/connection'
+require 'puppetdb/connection_multi'
 require 'puppet/util/puppetdb'
 
 describe 'query_nodes' do
-  let(:puppetdb) { double('PuppetDB::Connection') }
+  let(:puppetdb) { double('PuppetDB::MultiConnection') }
 
   before do
-    allow(PuppetDB::Connection).to receive(:check_version)
-    allow(PuppetDB::Connection).to receive(:from_uris).and_return(puppetdb)
+    allow(PuppetDB::MultiConnection).to receive(:check_version)
+    allow(PuppetDB::MultiConnection).to receive(:from_uris).and_return(puppetdb)
     allow(Puppet::Util::Puppetdb).to receive_message_chain(:config, :server_urls).and_return([])
   end
 

@@ -16,7 +16,7 @@ class PuppetDB::Connection
   def self.from_uris(uris)
     conn = allocate
     conn.instance_variable_set(:@servers, Array(uris).map do |uri|
-      u = URI(uri)
+      u = uri.is_a?(URI::Generic) ? uri : URI.parse(uri.to_s)
       { :host => u.host, :port => u.port, :use_ssl => u.scheme == 'https' }
     end)
     conn
